@@ -270,6 +270,9 @@ pub enum WindowEvent<'a> {
     ///   issue, and it should get fixed - but it's the current state of the API.
     ModifiersChanged(ModifiersState),
 
+    /// An event from IME
+    IME(IME),
+
     /// The cursor has moved on the window.
     CursorMoved {
         device_id: DeviceId,
@@ -378,6 +381,8 @@ impl Clone for WindowEvent<'static> {
             },
 
             ModifiersChanged(modifiers) => ModifiersChanged(*modifiers),
+            IME(preedit_state) => IME(preedit_state.clone()),
+
             #[allow(deprecated)]
             CursorMoved {
                 device_id,
@@ -468,6 +473,7 @@ impl<'a> WindowEvent<'a> {
                 is_synthetic,
             }),
             ModifiersChanged(modifiers) => Some(ModifiersChanged(modifiers)),
+            IME(event) => Some(IME(event)),
             #[allow(deprecated)]
             CursorMoved {
                 device_id,
@@ -625,6 +631,28 @@ pub struct KeyboardInput {
     /// this device are not being delivered to the application, e.g. due to keyboard focus being elsewhere.
     #[deprecated = "Deprecated in favor of WindowEvent::ModifiersChanged"]
     pub modifiers: ModifiersState,
+}
+
+/// Describes an event from input method.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum IME {
+    /// Notifies when the IME was enabled.
+    Enabled,
+
+    /// Notifies when a new composing text should be set at the cursor position.
+    ///
+    /// The value represents a pair of the preedit string and the cursor begin position and end
+    /// position. When both indices are `None`, the cursor should be hidden.
+    ///
+    /// The cursor position is byte-wise indexed.
+    Preedit(String, Option<usize>, Option<usize>),
+
+    /// Notifies when text should be inserted into the editor widget.
+    Commit(String),
+
+    /// Notifies when the IME was disabled.
+    Disabled,
 }
 
 /// Describes touch-screen input state.
