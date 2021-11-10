@@ -367,7 +367,10 @@ impl<T: 'static> EventLoop<T> {
                 loop {
                     match self.poll.poll(&mut events, timeout) {
                         Ok(_) => break,
-                        Err(e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
+                        Err(e) if e.kind() == std::io::ErrorKind::Interrupted => {
+                            log::debug!("polling failed because of Interrupt. retrying.");
+                            continue;
+                        },
                         e => e.unwrap(),
                     }
                 }
