@@ -364,7 +364,13 @@ impl<T: 'static> EventLoop<T> {
             // If the XConnection already contains buffered events, we don't
             // need to wait for data on the socket.
             if !self.event_processor.poll() {
-                self.poll.poll(&mut events, timeout).unwrap();
+                loop {
+                    match self.poll.poll(&mut events, timeout) {
+                        Ok(_) => break,
+                        Err(e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
+                        e => e.unwrap(),
+                    }
+                }
                 events.clear();
             }
 
